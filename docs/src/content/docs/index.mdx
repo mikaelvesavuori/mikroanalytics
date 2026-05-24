@@ -1,0 +1,47 @@
+---
+title: MikroAnalytics
+description: Private analytics without visitor profiling.
+template: splash
+hero:
+  tagline: Self-hosted analytics for teams who want useful signals. No visitor profiling, no vendor lock-in.
+  image:
+    light: ../../assets/logo.svg
+    dark: ../../assets/logo.svg
+  actions:
+    - text: Get Started
+      link: /analytics/docs/getting-started/intro
+      icon: rocket
+    - text: Installation
+      link: /analytics/docs/getting-started/installation
+      icon: laptop
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <Card title="Getting Started" icon="open-book">
+    Set up MikroAnalytics and start tracking.
+
+    <LinkCard title="What is MikroAnalytics?" href="/analytics/docs/getting-started/intro" />
+    <LinkCard title="Installation" href="/analytics/docs/getting-started/installation" />
+  </Card>
+
+  <Card title="Guides" icon="puzzle">
+    Deep dives into MikroAnalytics features.
+
+    <LinkCard title="Configuration" href="/analytics/docs/guides/configuration" />
+    <LinkCard title="Tracking" href="/analytics/docs/guides/tracking" />
+    <LinkCard title="Privacy Model" href="/analytics/docs/guides/privacy-model" />
+    <LinkCard title="Authentication" href="/analytics/docs/guides/authentication" />
+    <LinkCard title="Deployment" href="/analytics/docs/guides/deployment" />
+  </Card>
+
+  <Card title="References" icon="document">
+    Complete API and configuration documentation.
+
+    <LinkCard title="Configuration" href="/analytics/docs/reference/configuration" />
+    <LinkCard title="API Reference" href="/analytics/docs/reference/api" />
+    <LinkCard title="Architecture" href="/analytics/docs/reference/architecture" />
+    <LinkCard title="Comparison" href="/analytics/docs/reference/comparison" />
+  </Card>
+</CardGrid>

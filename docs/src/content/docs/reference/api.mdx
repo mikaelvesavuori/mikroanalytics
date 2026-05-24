@@ -1,0 +1,104 @@
+---
+title: API Reference
+description: HTTP endpoints exposed by MikroAnalytics.
+---
+
+MikroAnalytics exposes a small ingestion and reporting API. The OpenAPI document is available at `/openapi.json`.
+
+## Public Endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/` | Dashboard app. |
+| `GET` | `/m.js` | Browser tracker. |
+| `GET` | `/config.json` | Browser runtime config and public auth routes. |
+| `GET` | `/health` | Service health. |
+| `GET` | `/openapi.json` | OpenAPI 3.1 document. |
+| `POST` | `/api/collect` | Ingests pageviews and custom events. |
+
+## Auth Endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/auth/me` | Returns current dashboard session. |
+| `POST` | `/api/auth/magic-link` | Accepts a sign-in link request without revealing whether the email is allowed. |
+| `POST` | `/api/auth/verify` | Verifies a magic-link token and sets the session cookie. |
+| `POST` | `/api/auth/logout` | Clears the session cookie. |
+
+## Protected Endpoints
+
+These require either the HttpOnly dashboard session cookie or an `Authorization: Bearer ...` admin token.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/sites` | Lists dashboard-managed sites and script snippets. |
+| `POST` | `/api/sites` | Creates a site. |
+| `PUT` | `/api/sites/:id` | Updates a site. |
+| `DELETE` | `/api/sites/:id` | Deletes a site and its stored analytics data. |
+| `GET` | `/api/report?site=site_marketing&days=30` | Returns aggregate analytics report. |
+| `GET` | `/api/collect-attempts?site=site_marketing` | Returns recent in-memory collect attempts for install checks. |
+| `POST` | `/api/cleanup` | Deletes expired aggregate and raw debug records. |
+
+## Collect Payload
+
+```json
+{
+  "site": "site_marketing",
+  "kind": "event",
+  "event": "signup",
+  "host": "example.com",
+  "path": "/pricing",
+  "referrer": "https://search.example/results",
+  "campaign": {
+    "utm_source": "newsletter",
+    "utm_medium": "email",
+    "utm_campaign": "launch"
+  },
+  "properties": {
+    "plan": "team"
+  }
+}
+```
+
+The collect endpoint returns `202` for accepted and privacy-ignored requests. Privacy-ignored requests include a reason such as `privacy_signal`, `unknown_site`, or `host_not_allowed`.
+
+## Site Payload
+
+```json
+{
+  "id": "site_marketing",
+  "name": "Marketing site",
+  "domains": ["example.com", "www.example.com"],
+  "allowedEventProperties": ["plan", "source"]
+}
+```
+
+## Report Shape
+
+`GET /api/report` returns:
+
+- `totals` for pageviews, events, and daily unique estimates,
+- `comparison` with the previous same-length period and percentage deltas,
+- `series` with daily points,
+- top `pages`,
+- top `events`,
+- top `referrers`,
+- top `campaigns`,
+- top `browsers`,
+- top `os`,
+- top `devices`,
+- optional top `countries`.
+
+## Collect Attempts
+
+`GET /api/collect-attempts` returns the latest accepted or ignored collect attempts held in server memory. This is meant for setup diagnostics, not durable analytics history. The response includes `accepted`, `reason`, `siteId`, `host`, `path`, `kind`, `eventName`, and `timestamp`.
+
+## Example
+
+```bash
+curl \
+  -H "Authorization: Bearer $MIKROANALYTICS_ADMIN_TOKEN" \
+  "https://analytics.example.com/api/report?site=site_marketing&days=30"
+```
+
+Use `/openapi.json` for generated clients or operational documentation.

@@ -1,0 +1,22 @@
+---
+title: Configuration
+description: Runtime configuration and public browser config for MikroAnalytics.
+---
+
+MikroAnalytics uses [MikroConf](https://github.com/mikaelvesavuori/mikroconf) for server settings and exposes a small public runtime config for the dashboard.
+
+## Server Config
+
+The primary server config file is `mikroanalytics.config.json`. Use environment variables for deployment-specific values such as secrets, host, port, SMTP, and auth allowlists.
+
+See the full [configuration reference](../reference/configuration) for every option.
+
+## Browser Runtime Config
+
+The dashboard reads:
+
+```text
+/config.json
+```
+
+That endpoint only returns public runtime settings, such as auth mode and public auth route paths. Secrets remain in server config, environment variables, and SQLite.

@@ -1,0 +1,78 @@
+---
+title: Authentication
+description: Configure MikroAuth magic-link sign-in and API access.
+---
+
+MikroAnalytics uses [MikroAuth](https://github.com/mikaelvesavuori/mikroauth) for dashboard sign-in. Private local testing can run without auth, while production deployments should use magic links and a strong session secret.
+
+## Local Mode
+
+Authentication is disabled by default. The dashboard treats the local session as an admin so you can start the app and inspect the product quickly.
+
+In this mode, magic-link email is not sent. Enable auth and configure SMTP before expecting a real inbox delivery.
+
+The dashboard reads `/config.json` on startup so its public auth routes and local or magic-link mode come from the running server rather than duplicated browser constants.
+
+You will most likely not want to use local auth-disabled mode for a public deployment.
+
+## Production Mode
+
+Enable auth in `mikroanalytics.config.json`:
+
+```json
+{
+  "appUrl": "https://analytics.example.com",
+  "auth": {
+    "enabled": true,
+    "allowedEmails": ["you@example.com"],
+    "allowedDomains": ["example.com"],
+    "jwtSecret": "replace-with-at-least-32-random-characters",
+    "magicLinkExpirySeconds": 900,
+    "jwtExpirySeconds": 3600,
+    "refreshTokenExpirySeconds": 604800,
+    "maxActiveSessions": 3
+  },
+  "email": {
+    "emailSubject": "Sign in to MikroAnalytics",
+    "host": "smtp.example.com",
+    "user": "smtp-user",
+    "password": "smtp-password",
+    "port": 587,
+    "secure": false
+  }
+}
+```
+
+`appUrl` must be the public dashboard URL. It is used when MikroAuth creates magic-link emails and when the server decides whether the session cookie should be marked `Secure`.
+
+## Environment Variables
+
+You can configure auth through environment variables:
+
+```bash
+MIKROANALYTICS_APP_URL="https://analytics.example.com"
+MIKROANALYTICS_AUTH_ENABLED=true
+MIKROANALYTICS_AUTH_ALLOWED_EMAILS="you@example.com"
+MIKROANALYTICS_AUTH_JWT_SECRET="replace-with-at-least-32-random-characters"
+MIKROANALYTICS_EMAIL_HOST="smtp.example.com"
+MIKROANALYTICS_EMAIL_USER="smtp-user"
+MIKROANALYTICS_EMAIL_PASSWORD="smtp-password"
+```
+
+Allowed emails and allowed domains can be used together. At least one must be present when auth is enabled.
+
+## Dashboard Sessions
+
+Successful magic-link verification sets an HttpOnly `mikroanalytics_access_token` cookie with `SameSite=Lax`. The dashboard uses that cookie for `/api/sites`, `/api/report`, and `/api/cleanup`.
+
+## API Tokens
+
+Set `MIKROANALYTICS_ADMIN_TOKEN` or `admin.token` to allow bearer-token access for automation:
+
+```bash
+curl \
+  -H "Authorization: Bearer $MIKROANALYTICS_ADMIN_TOKEN" \
+  "https://analytics.example.com/api/report?site=site_marketing&days=30"
+```
+
+The dashboard does not ask humans to paste an admin token. Token access is intended for scripts and operational tasks.

@@ -1,0 +1,40 @@
+{
+  "appUrl": "http://127.0.0.1:3000",
+  "host": "127.0.0.1",
+  "port": 3000,
+  "admin": {
+    "token": "change-me"
+  },
+  "auth": {
+    "enabled": false,
+    "allowedEmails": ["you@example.com"],
+    "allowedDomains": [],
+    "jwtSecret": "change-this-secret-before-enabling-auth",
+    "magicLinkExpirySeconds": 900,
+    "jwtExpirySeconds": 3600,
+    "refreshTokenExpirySeconds": 604800,
+    "maxActiveSessions": 3
+  },
+  "email": {
+    "emailSubject": "Sign in to MikroAnalytics",
+    "host": "",
+    "user": "",
+    "password": "",
+    "port": 587,
+    "secure": false,
+    "maxRetries": 2,
+    "debug": false
+  },
+  "privacy": {
+    "aggregateRetentionDays": 395,
+    "collectUniqueVisitors": false,
+    "honorDoNotTrack": true,
+    "storeRawEvents": false,
+    "rawEventRetentionHours": 24,
+    "referrerPolicy": "origin",
+    "geo": {
+      "enabled": false,
+      "countryHeader": "cf-ipcountry"
+    }
+  }
+}

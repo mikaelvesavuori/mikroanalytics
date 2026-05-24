@@ -1,0 +1,79 @@
+---
+title: Privacy Model
+description: How MikroAnalytics keeps analytics aggregate-first and privacy-oriented.
+---
+
+MikroAnalytics is designed around data minimisation. It aims to answer product questions with aggregate metrics instead of collecting enough data to reconstruct individual behavior.
+
+## Defaults
+
+By default, MikroAnalytics does not use:
+
+- cookies,
+- local storage,
+- cross-site visitor IDs,
+- fingerprinting,
+- raw IP storage,
+- raw user-agent storage,
+- full referrer URLs,
+- full page URLs with query strings,
+- visitor profiles,
+- visitor timelines,
+- session replay.
+
+Raw debug event storage is disabled. Aggregate retention defaults to 395 days.
+
+## What Is Stored
+
+MikroAnalytics stores aggregate counters by site and date:
+
+- daily totals,
+- page paths without query strings or fragments,
+- event names,
+- referrer origins,
+- campaign values,
+- browser, operating system, and device category,
+- optional country codes from trusted infrastructure headers,
+- optional daily unique estimates.
+
+The database is intentionally ordinary SQLite. That makes backups, inspection, and retention work easier to reason about.
+
+## Privacy Signals
+
+MikroAnalytics honors Do Not Track and Global Privacy Control by default in both the browser script and the server-side collect endpoint.
+
+When a privacy signal is present, collection is accepted as a request but ignored for analytics storage.
+
+## Daily Unique Estimates
+
+Daily unique estimates are disabled by default. When enabled, MikroAnalytics hashes IP address and user-agent with the site ID, UTC date, and a secret salt, then stores only the daily hash.
+
+This avoids storing raw IPs and raw user agents, and the hash rotates by day. It is still a more privacy-sensitive mode than strict aggregate counting because it uses request metadata to estimate uniqueness.
+
+Enable it only when the product need is clear:
+
+```json
+{
+  "privacy": {
+    "collectUniqueVisitors": true,
+    "uniqueVisitorSalt": "replace-with-a-long-random-secret",
+    "trustProxy": true
+  }
+}
+```
+
+## Referrer Policy
+
+The default `origin` policy stores only external referrer origins. The supported modes are:
+
+| Policy | Behavior |
+| --- | --- |
+| `origin` | Stores external referrer origins, ignores same-site referrers. |
+| `same-origin-path` | Stores same-site paths and external origins. |
+| `none` | Does not store referrer data. |
+
+## GDPR Posture
+
+MikroAnalytics is built to support privacy-friendly, GDPR-conscious analytics deployments: minimised data, no cookies by default, clear retention, self-hosted storage, and no third-party analytics processor unless you choose one through hosting.
+
+It does not remove your responsibilities as controller. Your compliance still depends on your legal basis, notices, processor agreements, hosting location, retention policy, and local cookie/ePrivacy interpretation.

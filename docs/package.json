@@ -1,0 +1,35 @@
+{
+  "name": "mikroanalytics-docs",
+  "type": "module",
+  "version": "1.0.0",
+  "keywords": [
+    "mikroanalytics",
+    "documentation",
+    "docs",
+    "starlight"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikaelvesavuori/mikroanalytics.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikaelvesavuori/mikroanalytics/issues"
+  },
+  "homepage": "https://github.com/mikaelvesavuori/mikroanalytics#readme",
+  "private": true,
+  "description": "The documentation site for MikroAnalytics.",
+  "author": "MikroAnalytics",
+  "license": "MIT",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "latest",
+    "astro": "latest",
+    "typescript": "6"
+  }
+}

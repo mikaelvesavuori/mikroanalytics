@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MikroAnalytics</title>
+    <meta name="description" content="Private, self-hosted analytics for teams that want product signal without visitor profiling." />
+    <meta id="theme-color" name="theme-color" content="#f4f6f9" />
+    <script>
+      (() => {
+        const key = "mikroanalytics_theme";
+        const dark = "#0b0d10";
+        const light = "#f4f6f9";
+        let theme = "light";
+
+        try {
+          const savedTheme = localStorage.getItem(key);
+          theme =
+            savedTheme === "dark" || savedTheme === "light"
+              ? savedTheme
+              : matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+        } catch {
+          theme = "light";
+        }
+
+        document.documentElement.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? dark : light);
+      })();
+    </script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main id="auth-panel" class="auth-screen" hidden>
+      <form id="auth-form" class="auth-card">
+        <div class="auth-brand">MikroAnalytics</div>
+        <div class="auth-copy">
+          <h1 id="auth-title">Sign in</h1>
+          <p id="auth-help">Enter your email to request a sign-in link.</p>
+        </div>
+        <div id="auth-fields">
+          <label class="auth-field">
+            <span>Email</span>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+          </label>
+          <button id="send-link" class="auth-submit" type="submit">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M3.75 6.75h16.5v10.5H3.75V6.75Z" />
+              <path d="m4.5 7.5 7.5 5.25 7.5-5.25" />
+            </svg>
+            <span id="send-link-label">Request sign-in link</span>
+          </button>
+        </div>
+        <div id="auth-result" class="auth-result" hidden>
+          <p id="auth-result-text" class="status" aria-live="polite"></p>
+          <button id="auth-back" class="auth-secondary" type="button">Back</button>
+        </div>
+        <p id="auth-status" class="status" aria-live="polite"></p>
+      </form>
+    </main>
+
+    <main id="app-shell" class="shell" hidden>
+      <header class="topbar">
+        <div class="brand-block">
+          <strong class="brand-name">MikroAnalytics</strong>
+        </div>
+        <div class="topbar-actions requires-auth" hidden>
+          <select id="site" class="native-site-select" aria-hidden="true" tabindex="-1"></select>
+          <div class="site-picker" data-site-menu-root>
+            <button id="site-menu-trigger" class="site-menu-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+              <span>
+                <strong id="site-menu-label">No site</strong>
+              </span>
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            <div id="site-menu" class="site-menu" role="menu" aria-label="Sites" hidden>
+              <div id="site-menu-list" class="site-menu-list"></div>
+              <button id="site-menu-new" class="site-menu-new" type="button" role="menuitem">
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                <span>New site</span>
+              </button>
+            </div>
+          </div>
+          <label class="select-field compact stats-control">
+            <span class="sr-only">Date range</span>
+            <select id="days">
+              <option value="7">7 days</option>
+              <option value="30" selected>30 days</option>
+              <option value="90">90 days</option>
+              <option value="180">180 days</option>
+              <option value="365">1 year</option>
+              <option value="custom">Custom days</option>
+              <option value="range" disabled>Selected range</option>
+            </select>
+          </label>
+          <label id="custom-days-field" class="custom-days-field" hidden>
+            <span class="sr-only">Custom period in days</span>
+            <input id="custom-days" type="number" min="1" max="730" step="1" value="30" inputmode="numeric" />
+          </label>
+          <button id="configure-site" class="icon-button" type="button" aria-label="Configure site" title="Configure site">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
+              <path d="M19.5 12a7.45 7.45 0 0 0-.12-1.34l2.12-1.65-2-3.46-2.5 1a7.54 7.54 0 0 0-2.32-1.35L14.25 2.5h-4.5l-.43 2.7A7.54 7.54 0 0 0 7 6.55l-2.5-1-2 3.46 2.12 1.65a7.28 7.28 0 0 0 0 2.68L2.5 14.99l2 3.46 2.5-1a7.54 7.54 0 0 0 2.32 1.35l.43 2.7h4.5l.43-2.7A7.54 7.54 0 0 0 17 17.45l2.5 1 2-3.46-2.12-1.65A7.45 7.45 0 0 0 19.5 12Z" />
+            </svg>
+          </button>
+          <button id="share-link" class="icon-button" type="button" aria-label="Copy view link" title="Copy view link">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M13.19 8.69a4.5 4.5 0 0 1 1.24 7.24l-4.5 4.5a4.5 4.5 0 0 1-6.36-6.36l1.76-1.76" />
+              <path d="M10.81 15.31a4.5 4.5 0 0 1-1.24-7.24l4.5-4.5a4.5 4.5 0 0 1 6.36 6.36l-1.76 1.76" />
+            </svg>
+          </button>
+          <div class="export-picker">
+            <button
+              id="export-menu-trigger"
+              class="icon-button"
+              type="button"
+              aria-label="Export data"
+              title="Export data"
+              aria-haspopup="menu"
+              aria-expanded="false"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M12 3v10.5" />
+                <path d="m8.25 9.75 3.75 3.75 3.75-3.75" />
+                <path d="M4.5 15.75V18A2.25 2.25 0 0 0 6.75 20.25h10.5A2.25 2.25 0 0 0 19.5 18v-2.25" />
+              </svg>
+            </button>
+            <div id="export-menu" class="export-menu" role="menu" aria-label="Export formats" hidden>
+              <button id="export-menu-json" class="export-menu-button" type="button" role="menuitem">JSON</button>
+              <button id="export-menu-csv" class="export-menu-button" type="button" role="menuitem">CSV</button>
+            </div>
+          </div>
+          <button id="refresh" class="icon-button" type="button" aria-label="Refresh dashboard" title="Refresh dashboard">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M16.02 9.35h4.23V5.12" />
+              <path d="M20.25 9.35A8.25 8.25 0 0 0 5.02 6.1" />
+              <path d="M7.98 14.65H3.75v4.23" />
+              <path d="M3.75 14.65a8.25 8.25 0 0 0 15.23 3.25" />
+            </svg>
+          </button>
+          <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle color mode" title="Toggle color mode">
+            <svg id="theme-icon-sun" aria-hidden="true" viewBox="0 0 24 24" hidden>
+              <path d="M12 3v1.5m0 15V21m8.485-8.485H21m-18 0H3m15.364-6.364 1.06-1.06M4.576 19.425l1.06-1.06m12.728 0 1.06 1.06M4.576 4.575l1.06 1.06M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+            </svg>
+            <svg id="theme-icon-moon" aria-hidden="true" viewBox="0 0 24 24">
+              <path fill="currentColor" stroke="none" d="M12 20.5a8.5 8.5 0 0 0 8.5-8.5c0-.7-.1-1.05-.43-1.05-.2 0-.36.12-.56.22a5.8 5.8 0 0 1-2.58.58 4.68 4.68 0 0 1-4.68-4.68c0-.94.2-1.8.58-2.58.1-.2.22-.36.22-.56 0-.33-.35-.43-1.05-.43a8.5 8.5 0 1 0 0 17Z" />
+            </svg>
+          </button>
+          <button id="logout" class="icon-button requires-auth" type="button" aria-label="Sign out" title="Sign out" hidden>
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15" />
+              <path d="M18 15l3-3-3-3" />
+              <path d="M9 12h12" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section id="stats-view" class="view-stack requires-auth" hidden>
+        <section class="metrics" aria-label="Summary">
+          <article class="metric">
+            <span>Pageviews</span>
+            <strong id="pageviews">0</strong>
+            <small id="pageviews-delta">No previous data</small>
+          </article>
+          <article class="metric">
+            <span>Events</span>
+            <strong id="events">0</strong>
+            <small id="events-delta">No previous data</small>
+          </article>
+          <article class="metric">
+            <span>Daily uniques</span>
+            <strong id="uniques">0</strong>
+            <small id="uniques-delta">No previous data</small>
+          </article>
+        </section>
+
+        <section id="traffic-empty" class="panel wide empty-state" hidden>
+          <div>
+            <h2 id="traffic-empty-title">No traffic yet</h2>
+            <p id="traffic-empty-text">Install the tracker for this site, then refresh once the first request arrives.</p>
+          </div>
+          <button id="configure-from-empty" class="secondary-action" type="button">Configure</button>
+        </section>
+
+        <section id="trend-panel" class="panel wide">
+          <div class="panel-head">
+            <div class="trend-heading">
+              <h2>Trend</h2>
+              <div class="trend-picker" data-trend-menu-root>
+                <button id="trend-menu-trigger" class="trend-menu-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+                  <span id="trend-menu-label">Pageviews</span>
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                <div id="trend-menu" class="trend-menu" role="menu" aria-label="Trend series" hidden>
+                  <div id="trend-menu-list" class="trend-menu-list"></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button id="range-reset" class="range-reset" type="button" hidden>
+                <span id="range-label"></span>
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M6 6l12 12" />
+                  <path d="M18 6 6 18" />
+                </svg>
+              </button>
+              <span id="generated"></span>
+            </div>
+          </div>
+          <div id="trend-legend" class="trend-legend"></div>
+          <div class="trend-chart">
+            <div class="trend-y-axis" aria-hidden="true">
+              <span id="trend-y-label">Pageviews</span>
+              <span id="trend-max">0</span>
+              <span id="trend-mid">0</span>
+              <span>0</span>
+            </div>
+            <div class="trend-plot">
+              <div id="trend" class="trend"></div>
+              <div class="trend-x-axis" aria-hidden="true">
+                <span id="trend-start"></span>
+                <span>Days</span>
+                <span id="trend-end"></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="details-grid" class="grid">
+          <article class="panel">
+            <h2>Pages</h2>
+            <div id="pages" class="list"></div>
+          </article>
+          <article class="panel">
+            <h2>Events</h2>
+            <div id="event-list" class="list"></div>
+          </article>
+          <article class="panel">
+            <h2>Referrers</h2>
+            <div id="referrers" class="list"></div>
+          </article>
+          <article class="panel">
+            <h2>Campaigns</h2>
+            <div id="campaigns" class="list"></div>
+          </article>
+          <article class="panel">
+            <h2>Devices</h2>
+            <div id="devices" class="list"></div>
+          </article>
+          <article class="panel">
+            <h2>Browsers</h2>
+            <div id="browsers" class="list"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="site-modal" class="site-modal">
+      <form method="dialog" class="modal-frame">
+        <div class="modal-head">
+          <div>
+            <h2>Site configuration</h2>
+          </div>
+          <button id="close-site-modal" class="icon-button" value="close" type="submit" aria-label="Close site configuration" title="Close">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M6 6l12 12" />
+              <path d="M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+      </form>
+      <div class="modal-body">
+        <section class="panel wide site-config-panel">
+          <div class="panel-head">
+            <h2>Sites</h2>
+            <div class="panel-actions">
+              <button id="delete-site" class="icon-button danger" type="button" aria-label="Delete site" title="Delete site">
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M9.75 9.75v7.5" />
+                  <path d="M14.25 9.75v7.5" />
+                  <path d="M4.5 6.75h15" />
+                  <path d="M7.5 6.75 8.25 21h7.5l.75-14.25" />
+                  <path d="M9 6.75V4.5h6v2.25" />
+                </svg>
+              </button>
+              <button id="new-site" class="icon-button" type="button" aria-label="New site" title="New site">
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <form id="site-form" class="site-form">
+            <label class="form-field span-three">
+              <span>Selected site</span>
+              <select id="site-editor"></select>
+            </label>
+            <label class="form-field">
+              <span>Name</span>
+              <input id="site-name" name="name" type="text" autocomplete="off" placeholder="Marketing site" />
+            </label>
+            <label class="form-field">
+              <span>Site ID</span>
+              <input id="site-id" name="id" type="text" autocomplete="off" placeholder="site_marketing" />
+            </label>
+            <label class="form-field span-two">
+              <span>Origins</span>
+              <input id="site-domains" name="domains" type="text" autocomplete="off" placeholder="example.com, www.example.com" />
+            </label>
+            <label class="form-field span-two">
+              <span>Event props</span>
+              <input id="site-properties" name="properties" type="text" autocomplete="off" placeholder="plan, source" />
+            </label>
+            <button id="save-site" class="action-button" type="submit">Save site</button>
+          </form>
+        </section>
+
+        <section class="install-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Tracker snippet</h2>
+              <button id="copy-snippet" class="icon-button" type="button" aria-label="Copy tracker snippet" title="Copy tracker snippet">
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M8 8.25A2.25 2.25 0 0 1 10.25 6h7.5A2.25 2.25 0 0 1 20 8.25v9.5A2.25 2.25 0 0 1 17.75 20h-7.5A2.25 2.25 0 0 1 8 17.75v-9.5Z" />
+                  <path d="M16 6V4.25A2.25 2.25 0 0 0 13.75 2h-7.5A2.25 2.25 0 0 0 4 4.25v9.5A2.25 2.25 0 0 0 6.25 16H8" />
+                </svg>
+              </button>
+            </div>
+            <div class="snippet-card">
+              <span id="snippet-label">Add this in your HTML head section.</span>
+              <code id="snippet"></code>
+            </div>
+          </article>
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Install check</h2>
+              <span id="install-state">Waiting</span>
+            </div>
+            <div id="attempt-list" class="attempt-list"></div>
+          </article>
+        </section>
+      </div>
+    </dialog>
+    <dialog id="shortcuts-dialog" class="utility-dialog" aria-label="Keyboard shortcuts">
+      <form method="dialog" class="modal-frame">
+        <div class="modal-head">
+          <div>
+            <h2>Shortcuts</h2>
+          </div>
+          <button class="icon-button" value="close" type="submit" aria-label="Close shortcuts" title="Close">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M6 6l12 12" />
+              <path d="M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+      </form>
+      <div class="utility-body">
+        <div class="shortcut-list">
+          <div><kbd>Cmd/Ctrl K</kbd><span>Command palette</span></div>
+          <div><kbd>?</kbd><span>Keyboard shortcuts</span></div>
+          <div><kbd>R</kbd><span>Refresh dashboard</span></div>
+          <div><kbd>C</kbd><span>Configure site</span></div>
+          <div><kbd>N</kbd><span>New site</span></div>
+          <div><kbd>L</kbd><span>Copy dashboard link</span></div>
+          <div><kbd>T</kbd><span>Toggle theme</span></div>
+          <div><kbd>Esc</kbd><span>Close menus and dialogs</span></div>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="command-dialog" class="command-dialog" aria-label="Command palette">
+      <div class="command-head">
+        <label for="command-input">Command</label>
+        <input id="command-input" class="command-input" type="search" autocomplete="off" aria-controls="command-list" />
+      </div>
+      <div id="command-list" class="command-list" role="listbox"></div>
+      <div class="command-foot">Enter to run · Esc to close</div>
+    </dialog>
+    <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="/dashboard.js"></script>
+  </body>
+</html>

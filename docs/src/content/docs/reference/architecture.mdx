@@ -1,0 +1,60 @@
+---
+title: Architecture
+description: The runtime and data model behind MikroAnalytics.
+---
+
+MikroAnalytics follows the MikroSuite pattern: a small product surface, a plain Node runtime, a local database, and static assets built for production.
+
+## Runtime
+
+- **Server**: Node.js HTTP server.
+- **Dashboard**: Vanilla HTML, CSS, and TypeScript.
+- **Tracker**: Tiny browser script served from `/m.js`.
+- **Configuration**: MikroConf-backed `mikroanalytics.config.json` for runtime settings.
+- **Runtime config**: Public browser settings at `/config.json`; secrets stay server-side.
+- **Storage**: SQLite through `node:sqlite` for sites and aggregates.
+- **Auth**: MikroAuth magic links with HttpOnly session cookies.
+- **Build**: esbuild, Lightning CSS, and HTML minification.
+
+## Request Flow
+
+1. The website loads `/m.js` with a `data-site` attribute.
+2. The tracker sends pageviews, navigation changes, and custom events to `/api/collect`.
+3. The server validates the site, origin host, privacy signals, event name, path, referrer, campaign values, and event properties.
+4. The database updates aggregate counters by site and date.
+5. The dashboard manages sites through `/api/sites` and reads reports through `/api/report`.
+
+## Data Model
+
+MikroAnalytics stores independent aggregate tables:
+
+- `daily_totals`,
+- `page_counts`,
+- `event_counts`,
+- `referrer_counts`,
+- `campaign_counts`,
+- `browser_counts`,
+- `os_counts`,
+- `device_counts`,
+- `country_counts`,
+- `daily_uniques`,
+- `sites`,
+- `raw_events` for optional short-lived debugging.
+
+This keeps reporting simple and avoids needing raw event history for normal operation.
+
+## Privacy Boundary
+
+The sanitizer is the core privacy boundary. It strips query strings and fragments from paths, normalizes referrers according to policy, filters event properties, blocks common sensitive property keys, summarizes user agents into broad dimensions, and ignores requests with DNT or GPC signals.
+
+Raw request metadata is used only while handling the request unless an explicit optional feature needs it, such as daily unique estimation.
+
+## Operational Boundary
+
+The browser collect endpoint is public by design, but it only accepts dashboard-managed site IDs and allowed hosts. Dashboard and reporting endpoints require a session cookie or bearer token.
+
+Keep the SQLite database on persistent storage, back it up, and run cleanup on a schedule that matches your retention policy.
+
+## Why This Shape
+
+MikroAnalytics chooses boring parts on purpose. The product should be easy to inspect, easy to self-host, and easy to remove. A team should be able to understand what data is collected without reverse-engineering a vendor pipeline.

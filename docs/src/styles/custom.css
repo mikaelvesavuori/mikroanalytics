@@ -1,0 +1,26 @@
+:root {
+  --sl-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --sl-color-accent-low: #dbeafe;
+  --sl-color-accent: #2563eb;
+  --sl-color-accent-high: #1e3a8a;
+  --sl-color-bg: #f8faf8;
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-bg-sidebar: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --sl-color-accent-low: #172554;
+  --sl-color-accent: #93c5fd;
+  --sl-color-accent-high: #dbeafe;
+  --sl-color-bg: #0d100d;
+  --sl-color-bg-nav: #141814;
+  --sl-color-bg-sidebar: #141814;
+}
+
+.hero img {
+  filter: drop-shadow(0 20px 44px rgb(37 99 235 / 0.18));
+}
+
+.card {
+  border-radius: 8px;
+}

@@ -1,0 +1,93 @@
+---
+title: Deployment
+description: Deploy MikroAnalytics as a small self-hosted analytics service.
+---
+
+MikroAnalytics is designed to be boring to host: run the Node API, serve the static app, keep SQLite on persistent storage, and put a reverse proxy in front of it.
+
+## Download and Run
+
+```bash
+mkdir -p /opt/mikroanalytics/api /opt/mikroanalytics/app
+
+curl -sSL -o /opt/mikroanalytics/mikroanalytics_api.zip https://releases.mikrosuite.com/mikroanalytics_api_latest.zip
+curl -sSL -o /opt/mikroanalytics/mikroanalytics_app.zip https://releases.mikrosuite.com/mikroanalytics_app_latest.zip
+
+unzip -q /opt/mikroanalytics/mikroanalytics_api.zip -d /opt/mikroanalytics/api
+unzip -q /opt/mikroanalytics/mikroanalytics_app.zip -d /opt/mikroanalytics/app
+
+API_DIR="$(find /opt/mikroanalytics/api -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+APP_DIR="$(find /opt/mikroanalytics/app -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+
+cd "$API_DIR"
+cp mikroanalytics.config.json.example mikroanalytics.config.json
+MIKROANALYTICS_STATIC_ROOT="$APP_DIR" node server.mjs
+```
+
+Edit `mikroanalytics.config.json` before exposing the service publicly.
+
+## Release Downloads
+
+The latest release archives are available from GitHub Releases and these stable URLs:
+
+- `https://releases.mikrosuite.com/mikroanalytics_api_latest.zip` - Node API service
+- `https://releases.mikrosuite.com/mikroanalytics_app_latest.zip` - static dashboard and tracker assets
+
+## Runtime Settings
+
+Set these in production:
+
+```bash
+MIKROANALYTICS_APP_URL="https://analytics.example.com"
+MIKROANALYTICS_HOST="127.0.0.1"
+MIKROANALYTICS_PORT=3000
+MIKROANALYTICS_STATIC_ROOT="/opt/mikroanalytics/app/mikroanalytics_app_1.0.0"
+MIKROANALYTICS_AUTH_ENABLED=true
+MIKROANALYTICS_AUTH_JWT_SECRET="replace-with-at-least-32-random-characters"
+```
+
+Use `MIKROANALYTICS_CONFIG_PATH` if you keep configuration outside the release directory.
+
+## Reverse Proxy
+
+Terminate TLS at a reverse proxy and forward requests to the Node service. The simplest setup lets the API serve the app through `MIKROANALYTICS_STATIC_ROOT`, so the dashboard, `/m.js`, and `/api/*` share one origin.
+
+If you serve the app archive separately, proxy `/api/*`, `/config.json`, `/health`, and `/openapi.json` to the API. Keep `/m.js` available from the same public analytics origin used in tracker snippets.
+
+Make sure the proxy preserves:
+
+- `Host`,
+- `Origin`,
+- `Referer`,
+- `User-Agent`,
+- `DNT`,
+- `Sec-GPC`.
+
+If you enable daily unique estimates behind a proxy, also enable `MIKROANALYTICS_TRUST_PROXY=true` and forward the real client IP through `x-forwarded-for` or `cf-connecting-ip`.
+
+## Storage and Backups
+
+Keep `data/` on persistent disk. Back up the SQLite database with the same care as other product telemetry.
+
+The data model is aggregate-first, but analytics can still reveal business-sensitive usage patterns.
+
+## Retention Cleanup
+
+Aggregate retention defaults to 395 days. Raw debug events are disabled by default and, when enabled, default to 24 hours.
+
+Run cleanup from a trusted job:
+
+```bash
+curl \
+  -X POST \
+  -H "Authorization: Bearer $MIKROANALYTICS_ADMIN_TOKEN" \
+  "https://analytics.example.com/api/cleanup"
+```
+
+## Health Check
+
+```bash
+curl "https://analytics.example.com/health"
+```
+
+The health endpoint returns service name, status, and timestamp.

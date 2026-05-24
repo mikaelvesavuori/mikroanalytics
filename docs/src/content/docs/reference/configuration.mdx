@@ -1,0 +1,135 @@
+---
+title: Configuration
+description: Configuration file and environment variable reference for MikroAnalytics.
+---
+
+MikroAnalytics uses [MikroConf](https://github.com/mikaelvesavuori/mikroconf). The primary configuration file is `mikroanalytics.config.json`; environment variables and CLI flags are intended for deployment-specific overrides such as secrets, host, and port.
+
+Sites and analytics origins are managed in the dashboard, not in the configuration file.
+
+Use `MIKROANALYTICS_CONFIG_PATH` to point to a different config file.
+
+Configuration precedence is:
+
+1. CLI flags.
+2. Environment variable overrides.
+3. `mikroanalytics.config.json`.
+4. Built-in defaults.
+
+## Example
+
+```json
+{
+  "appUrl": "https://analytics.example.com",
+  "host": "127.0.0.1",
+  "port": 3000,
+  "staticRoot": "/opt/mikroanalytics/app/current",
+  "admin": {
+    "token": "replace-with-a-long-random-token"
+  },
+  "auth": {
+    "enabled": true,
+    "allowedEmails": ["you@example.com"],
+    "allowedDomains": [],
+    "jwtSecret": "replace-with-at-least-32-random-characters",
+    "magicLinkExpirySeconds": 900,
+    "jwtExpirySeconds": 3600,
+    "refreshTokenExpirySeconds": 604800,
+    "maxActiveSessions": 3
+  },
+  "email": {
+    "emailSubject": "Sign in to MikroAnalytics",
+    "host": "smtp.example.com",
+    "user": "smtp-user",
+    "password": "smtp-password",
+    "port": 587,
+    "secure": false,
+    "maxRetries": 2,
+    "debug": false
+  },
+  "privacy": {
+    "aggregateRetentionDays": 395,
+    "collectUniqueVisitors": false,
+    "honorDoNotTrack": true,
+    "storeRawEvents": false,
+    "rawEventRetentionHours": 24,
+    "referrerPolicy": "origin",
+    "geo": {
+      "enabled": false,
+      "countryHeader": "cf-ipcountry"
+    }
+  }
+}
+```
+
+## Top-Level Settings
+
+| Field | Default | Purpose |
+| --- | --- | --- |
+| `appUrl` | `http://127.0.0.1:3000` | Public dashboard URL used by auth and secure-cookie detection. |
+| `host` | `127.0.0.1` | Interface the Node server binds to. |
+| `port` | `3000` | Port the Node server listens on. |
+| `staticRoot` | `dist/public` | Directory containing the static dashboard and tracker app. |
+| `admin.token` | empty | Bearer token for protected API automation. |
+
+## Sites
+
+Sites are stored in SQLite and managed from the dashboard. Use the dashboard to create a site, set allowed origins, and copy the tracker snippet.
+
+## Privacy
+
+| Field | Default | Purpose |
+| --- | --- | --- |
+| `aggregateRetentionDays` | `395` | Number of days to keep aggregate rows. |
+| `collectUniqueVisitors` | `false` | Enables daily unique estimates. Requires a salt. |
+| `uniqueVisitorSalt` | empty | Secret used for daily unique hashing. |
+| `honorDoNotTrack` | `true` | Ignores collection when DNT or GPC is present. |
+| `storeRawEvents` | `false` | Stores short-lived sanitized raw debug records. |
+| `rawEventRetentionHours` | `24` | Retention for raw debug records when enabled. |
+| `referrerPolicy` | `origin` | `origin`, `same-origin-path`, or `none`. |
+| `trustProxy` | `false` | Reads forwarded IP headers for unique estimates. |
+| `geo.enabled` | `false` | Reads country code from a request header. |
+| `geo.countryHeader` | `cf-ipcountry` | Header used for country code collection. |
+
+## Environment Variables
+
+| Variable | Purpose |
+| --- | --- |
+| `MIKROANALYTICS_CONFIG_PATH` | Config file path. |
+| `MIKROANALYTICS_APP_URL` | Public dashboard URL. |
+| `MIKROANALYTICS_HOST` | Server bind host. |
+| `MIKROANALYTICS_PORT` | Server port. |
+| `MIKROANALYTICS_STATIC_ROOT` | Static dashboard and tracker directory. |
+| `MIKROANALYTICS_ADMIN_TOKEN` | Bearer token for protected API calls. |
+| `MIKROANALYTICS_AUTH_ENABLED` | Enables MikroAuth. |
+| `MIKROANALYTICS_AUTH_ALLOWED_EMAILS` | Comma-separated allowed emails. |
+| `MIKROANALYTICS_AUTH_ALLOWED_DOMAINS` | Comma-separated allowed domains. |
+| `MIKROANALYTICS_AUTH_JWT_SECRET` | Dashboard session signing secret. |
+| `MIKROANALYTICS_EMAIL_HOST` | SMTP host. |
+| `MIKROANALYTICS_EMAIL_USER` | SMTP user. |
+| `MIKROANALYTICS_EMAIL_PASSWORD` | SMTP password. |
+| `MIKROANALYTICS_AGGREGATE_RETENTION_DAYS` | Aggregate retention override. |
+| `MIKROANALYTICS_COLLECT_UNIQUE_VISITORS` | Enables daily unique estimates. |
+| `MIKROANALYTICS_UNIQUE_SALT` | Secret salt for daily unique estimates. |
+| `MIKROANALYTICS_STORE_RAW_EVENTS` | Enables raw debug records. |
+| `MIKROANALYTICS_TRUST_PROXY` | Reads forwarded IP headers. |
+
+## CLI Flags
+
+| Flag | Purpose |
+| --- | --- |
+| `--config`, `--config-path` | Config file path. |
+| `--app-url` | Public dashboard URL. |
+| `--host` | Server bind host. |
+| `--port` | Server port. |
+| `--static-root` | Static dashboard and tracker directory. |
+| `--admin-token` | Bearer token for protected API calls. |
+| `--auth-enabled` | Enables MikroAuth. |
+| `--auth-allowed-emails` | Comma-separated allowed emails. |
+| `--auth-allowed-domains` | Comma-separated allowed domains. |
+| `--auth-jwt-secret` | Dashboard session signing secret. |
+| `--email-host`, `--email-user`, `--email-password` | SMTP settings. |
+| `--collect-unique-visitors` | Enables daily unique estimates. |
+| `--unique-salt` | Secret salt for daily unique estimates. |
+| `--store-raw-events` | Enables raw debug records. |
+| `--trust-proxy` | Reads forwarded IP headers. |

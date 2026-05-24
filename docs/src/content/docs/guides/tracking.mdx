@@ -1,0 +1,73 @@
+---
+title: Tracking
+description: Use the MikroAnalytics browser script and custom event API.
+---
+
+The MikroAnalytics tracker is intentionally small. It exposes one global, `window.mikro`, and sends JSON to `/api/collect`.
+
+## Basic Script
+
+```html
+<script defer src="https://analytics.example.com/m.js" data-site="site_marketing"></script>
+```
+
+Create the site in the dashboard first, then copy the generated snippet from the Sites view. The install check will show whether the first request was accepted or why it was ignored.
+
+By default, the script:
+
+- sends one pageview on load,
+- tracks single-page app navigation through `pushState`, `replaceState`, and `popstate`,
+- tracks clicks on elements with `data-mikro-event`,
+- respects Do Not Track and Global Privacy Control signals.
+
+## Script Options
+
+```html
+<script
+  defer
+  src="https://analytics.example.com/m.js"
+  data-site="site_marketing"
+  data-auto="true"
+  data-spa="true"
+  data-clicks="true"
+  data-do-not-track="true"
+></script>
+```
+
+Set `data-auto="false"` when you want to call `window.mikro.pageview()` yourself. Set `data-spa="false"` if the application already handles route analytics. Set `data-clicks="false"` to disable markup-based event tracking.
+
+## Custom Events
+
+```js
+window.mikro.event("signup", { plan: "team" });
+```
+
+Event names are trimmed, normalized, and limited to 80 characters. Event properties accept strings, numbers, and booleans. Property keys are limited to safe characters, and values are truncated before storage.
+
+## Markup Events
+
+```html
+<button data-mikro-event="signup_click" data-mikro-prop-plan="team">Start</button>
+```
+
+Every `data-mikro-prop-*` attribute becomes an event property. Use these for low-risk product actions such as CTA clicks, filter usage, exports, onboarding steps, and feature toggles.
+
+## Manual Pageviews
+
+```js
+window.mikro.pageview();
+```
+
+The tracker ignores duplicate pageviews for the same path during a session. This keeps SPA route handling from double-counting common navigation flows.
+
+## Campaigns and Referrers
+
+The tracker reads `ref`, `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, and `utm_content` from the current URL. MikroAnalytics stores those values as campaign aggregates, not as full visitor journeys.
+
+Referrers default to origin-only storage. A referrer like `https://search.example/results?q=private` becomes `https://search.example`.
+
+## Sensitive Data
+
+Do not send names, emails, account IDs, tokens, or customer-specific identifiers as event properties. MikroAnalytics blocks common sensitive property names by default, but the cleanest analytics setup is still to avoid sending them in the first place.
+
+For the public browser script, leave site `ingestToken` empty. Ingest tokens are useful for custom server-side ingestion where you can set the `x-mikroanalytics-token` header.

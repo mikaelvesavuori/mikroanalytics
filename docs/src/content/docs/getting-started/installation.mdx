@@ -1,0 +1,83 @@
+---
+title: Installation
+description: Run MikroAnalytics locally and add the tracker to a website.
+---
+
+MikroAnalytics runs as a small Node service and stores data in SQLite. Releases are split into an API archive and a static app archive.
+
+## Requirements
+
+- Node.js 25 or newer.
+- A domain or reverse proxy for production use.
+
+## Run Locally
+
+```bash
+mkdir -p mikroanalytics/api mikroanalytics/app
+ROOT="$PWD/mikroanalytics"
+
+curl -sSL -o "$ROOT/mikroanalytics_api.zip" https://releases.mikrosuite.com/mikroanalytics_api_latest.zip
+curl -sSL -o "$ROOT/mikroanalytics_app.zip" https://releases.mikrosuite.com/mikroanalytics_app_latest.zip
+
+unzip -q "$ROOT/mikroanalytics_api.zip" -d "$ROOT/api"
+unzip -q "$ROOT/mikroanalytics_app.zip" -d "$ROOT/app"
+
+API_DIR="$(find "$ROOT/api" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+APP_DIR="$(find "$ROOT/app" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+
+cd "$API_DIR"
+cp mikroanalytics.config.json.example mikroanalytics.config.json
+MIKROANALYTICS_STATIC_ROOT="$APP_DIR" node server.mjs
+```
+
+Open `http://127.0.0.1:3000`.
+
+The API serves the app from `MIKROANALYTICS_STATIC_ROOT`. For a separate static host, keep the dashboard and API on one public origin by proxying `/api/*`, `/config.json`, `/health`, `/openapi.json`, and `/m.js` to the right place.
+
+## Add a Site
+
+Create a site in the dashboard and add its allowed origins, such as `example.com` and `www.example.com`.
+
+## Install the Tracker
+
+Copy the generated snippet from the dashboard and add it to the site you want to measure:
+
+```html
+<script defer src="https://analytics.example.com/m.js" data-site="site_marketing"></script>
+```
+
+The script automatically records the first pageview, patches History API navigation for single-page apps, and enables markup-based event tracking.
+
+The dashboard install check shows the latest collect attempts for the selected site. An accepted request means data is flowing. An ignored request names the practical reason, such as origin, site, token, or privacy signal.
+
+## Enable Dashboard Authentication
+
+For production, enable MikroAuth magic-link sign-in:
+
+```json
+{
+  "appUrl": "https://analytics.example.com",
+  "auth": {
+    "enabled": true,
+    "allowedEmails": ["you@example.com"],
+    "allowedDomains": [],
+    "jwtSecret": "replace-with-at-least-32-random-characters"
+  },
+  "email": {
+    "host": "smtp.example.com",
+    "user": "smtp-user",
+    "password": "smtp-password",
+    "port": 587,
+    "secure": false
+  }
+}
+```
+
+The dashboard uses an HttpOnly session cookie. The bearer admin token remains available for automation and API clients.
+
+## Release Downloads
+
+The latest release archives are available from GitHub Releases and these stable URLs:
+
+- `https://releases.mikrosuite.com/mikroanalytics_api_latest.zip` - Node API service
+- `https://releases.mikrosuite.com/mikroanalytics_app_latest.zip` - static dashboard and tracker assets

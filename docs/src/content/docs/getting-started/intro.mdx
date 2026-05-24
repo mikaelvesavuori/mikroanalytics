@@ -1,0 +1,37 @@
+---
+title: What is MikroAnalytics?
+description: An introduction to MikroAnalytics, a private aggregate-first analytics service.
+---
+
+![MikroAnalytics product view](../../../assets/mikroanalytics.png)
+
+MikroAnalytics is a small, self-hosted analytics service for product teams, independent builders, and privacy-conscious organizations. It is built for the useful middle: enough signal to improve a product, not enough machinery to quietly build visitor dossiers.
+
+Use it when you want the common benefits of privacy-friendlier tools (e.g. Umami, Fathom, Plausible), or a narrow Google Analytics setup, but with MikroSuite-style control: minimal UI, explicit data boundaries, SQLite storage, MikroAuth, and a tracker you can understand.
+
+## Why Choose It
+
+- **Useful without being creepy**. Pageviews, navigation, referrers, campaigns, devices, browsers, OS, optional country, and custom events are collected as aggregates.
+- **Private by default**. No cookies, no local storage, no cross-site visitor IDs, no raw IP storage, no raw user-agent storage, no visitor timelines, and raw debug events are off by default.
+- **Small enough to own**. A Node service, a SQLite database, a static dashboard, and a tiny browser script served from your own domain.
+- **Product analytics, not just page counters**. Track events like `signup`, `upgrade_click`, `trial_started`, or `search_used` without pulling in a heavyweight product analytics suite.
+- **Clear setup feedback**. The dashboard guides the first site, shows the generated snippet, and reports recent collect attempts so installation problems are visible immediately.
+- **Built for the Mikro family**. Calm interface, local-first instincts, compact APIs, plain configuration, and production-oriented builds.
+
+## What It Measures
+
+MikroAnalytics tracks pageviews, single-page app navigation, custom events, top pages, referrer origins, campaign parameters, browser, device type, operating system, optional daily unique estimates, and period-over-period changes for the headline metrics.
+
+It can also read a country code from an infrastructure header such as Cloudflare's `cf-ipcountry` when geo collection is explicitly enabled. It does not do IP geolocation itself.
+
+## What It Avoids
+
+MikroAnalytics is not a behavioral advertising platform, session replay tool, identity graph, heatmap recorder, or customer data platform.
+
+It does not try to answer "what did this person do?" The intended question is "what is being used, where are people coming from, and which product moments matter?"
+
+## Good Fits
+
+MikroAnalytics works well for SaaS dashboards, documentation sites, product landing pages, private tools, open-source projects, and small teams that want analytics data to stay boring, inspectable, and close to home.
+
+It is especially useful when the current choice is between "no analytics at all" and "adding a commercial analytics script that collects more than the product needs."
