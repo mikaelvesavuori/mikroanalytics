@@ -1,6 +1,6 @@
 {
   "name": "mikroanalytics",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Private, aggregate-first web and product analytics.",
   "type": "module",
   "license": "MIT",
