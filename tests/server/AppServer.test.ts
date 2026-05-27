@@ -34,6 +34,10 @@ describe("AppServer", () => {
       });
 
       expect(collectResponse.status).toBe(202);
+      expect(collectResponse.headers.get("access-control-allow-origin")).toBe(
+        "https://example.com",
+      );
+      expect(collectResponse.headers.get("access-control-allow-credentials")).toBe("true");
       await expect(fetch(`${baseUrl}/api/report?site=site_1`)).resolves.toHaveProperty(
         "status",
         401,

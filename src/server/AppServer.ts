@@ -84,7 +84,7 @@ export class AppServer {
   }
 
   private async handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
-    applyCors(response);
+    applyCors(request, response);
 
     if (request.method === "OPTIONS") {
       sendNoContent(response);

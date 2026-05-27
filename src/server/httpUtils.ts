@@ -60,13 +60,19 @@ export function sendNoContent(response: ServerResponse, statusCode = 204): void 
   response.end();
 }
 
-export function applyCors(response: ServerResponse): void {
+export function applyCors(request: IncomingMessage, response: ServerResponse): void {
+  const origin = getHeader(request, "origin");
+
   response.setHeader(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization, X-MikroAnalytics-Token",
   );
   response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", origin || "*");
+  if (origin) {
+    response.setHeader("Access-Control-Allow-Credentials", "true");
+    response.setHeader("Vary", "Origin");
+  }
   response.setHeader("Access-Control-Max-Age", "600");
 }
 
